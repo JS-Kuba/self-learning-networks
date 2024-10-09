@@ -12,9 +12,9 @@ number_of_episodes = 1000                   # number of training epizodes (multi
 gamma = 0.8                                 # discount factor
 
 
-# file_name = 'map_simple.txt'
+file_name = 'map_simple.txt'
 # file_name = 'map_easy.txt'
-file_name = 'map_big.txt'
+# file_name = 'map_big.txt'
 #file_name = 'map_spiral.txt'
 
 reward_map = sf.load_data(file_name)
@@ -74,7 +74,7 @@ while not strategies_equal:
         strategies_equal = True
     if iter_rewards >= 7:
         strategies_equal = True
-        sf.draw_strategy(reward_map,strategy,"big_strategy_best_=_" + str(np.round(iter_rewards,2)))
+        sf.draw_strategy(reward_map,strategy,"strategy_best_=_" + str(np.round(iter_rewards,2)))
 
 sf.sailor_test(reward_map, strategy, 1000)
-sf.draw_strategy(reward_map,strategy,"big_strategy_best")
+sf.draw_strategy(reward_map,strategy,"strategy_best")
