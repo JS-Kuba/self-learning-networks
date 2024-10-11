@@ -1,4 +1,4 @@
-# dodatkowe funkcje do problemu żeglarza
+# sailor functions
 
 import time
 import os
@@ -7,42 +7,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-# test for given number of episodes - only exploration
-# higher number of episodes gives greater precision
-def sailor_test(reward_map, strategy, num_of_episodes):
-    num_of_rows, num_of_columns = reward_map.shape
-    num_of_steps_max = int(5*(num_of_rows + num_of_columns))    # maximum number of steps in an episode
-    sum_of_rewards = np.zeros([num_of_episodes], dtype=float)
+# loading rewards map from file
+def load_data(file_name):
+    file_ptr = open(file_name, 'r').read()
+    lines = file_ptr.split('\n')
+    number_of_lines = lines.__len__() - 1
+    row_values = lines[0].split()
+    number_of_values = row_values.__len__()
 
-    for episode in range(num_of_episodes):
-        state = np.zeros([2],dtype=int)       # initial state here [1 1] but rather random due to exploration
-        state[0] = np.random.randint(0,num_of_rows)  # start from random row in first column
-        the_end = False
-        nr_pos = 0
-        while the_end == False:
-            nr_pos = nr_pos + 1                            # move number
-        
-            # Action choosing (1 - right, 2 - up, 3 - left, 4 - bottom): 
-            action = strategy[state[0],state[1]] 
-            state_next, reward  = environment(state, action, reward_map)
-            state = state_next       # going to the next state
-        
-            # end of episode if maximum number of steps is reached or last column
-            # is reached
-            if (nr_pos == num_of_steps_max) | (state[1] >= num_of_columns-1):
-                the_end = True
-        
-            sum_of_rewards[episode] += reward
-    print('test-'+str(num_of_episodes)+' mean sum of rewards = ' + str(np.mean(sum_of_rewards)))
-    return sum_of_rewards
+    number_of_rows = 0
+    for i in range(number_of_lines):
+        row_values = lines[i].split()
+        number_of_values = row_values.__len__()
+        if (number_of_values > 0):
+            number_of_rows += 1
+            num_of_columns = number_of_values
 
+    map_of_rewards = np.zeros([number_of_rows, num_of_columns], dtype=float)
+    print("examples shape = " + str(map_of_rewards.shape))
+    
+    index = 0
+    for i in range(number_of_lines):
+        row_values = lines[i].split()
+        number_of_values = row_values.__len__()
+        if (number_of_values > 0):
+            for j in range(number_of_values):
+                map_of_rewards[index][j] = float(row_values[j])
+            index = index + 1
+
+    return map_of_rewards
 
 # returns new state and reward based on state and action
 def environment(state, action, reward_map):
     num_of_rows, num_of_columns = reward_map.shape
-    prob_side = 0.12
-    prob_back = 0.06
-    wall_colid_reward = -0.04
+    prob_side = 0.17
+    prob_back = 0.04
+    wall_colid_reward = -0.4
 
     state_new = np.copy(state)
     reward = 0
@@ -116,44 +116,42 @@ def environment(state, action, reward_map):
 
     return state_new, reward
 
+# test for given number of episodes - pure exploration
+# higher number of episodes gives higher precision
+def sailor_test(reward_map, strategy, num_of_episodes):
+    num_of_rows, num_of_columns = reward_map.shape
+    num_of_steps_max = int(5*(num_of_rows + num_of_columns))    # maximum number of steps in an episode
+    sum_of_rewards = np.zeros([num_of_episodes], dtype=float)
+
+    for episode in range(num_of_episodes):
+        state = np.zeros([2],dtype=int)                            # initial state here [1 1] but rather random due to exploration
+        state[0] = np.random.randint(0,num_of_rows)
+        the_end = False
+        nr_pos = 0
+        while the_end == False:
+            nr_pos = nr_pos + 1                            # move number
+        
+            # Action choosing (1 - right, 2 - up, 3 - left, 4 - bottom): 
+            action = strategy[state[0],state[1]] 
+            state_next, reward  = environment(state, action, reward_map)
+            state = state_next       # going to the next state
+        
+            # end of episode if maximum number of steps is reached or last column
+            # is reached
+            if (nr_pos == num_of_steps_max) | (state[1] >= num_of_columns-1):
+                the_end = True
+        
+            sum_of_rewards[episode] += reward
+    print('test-'+str(num_of_episodes)+' mean sum of rewards = ' + str(np.mean(sum_of_rewards)))
+    return sum_of_rewards
 
 # changing Q action-value table into startegy
 def strategy(Q):
     return 1 + np.argmax(Q,axis=2)
 
 
-# loading rewards map from file
-def load_data(file_name):
-    file_ptr = open(file_name, 'r').read()
-    lines = file_ptr.split('\n')
-    number_of_lines = lines.__len__() - 1
-    row_values = lines[0].split()
-    number_of_values = row_values.__len__()
-
-    number_of_rows = 0
-    for i in range(number_of_lines):
-        row_values = lines[i].split()
-        number_of_values = row_values.__len__()
-        if (number_of_values > 0):
-            number_of_rows += 1
-            num_of_columns = number_of_values
-
-    map_of_rewards = np.zeros([number_of_rows, num_of_columns], dtype=float)
-    print("examples shape = " + str(map_of_rewards.shape))
-    
-    index = 0
-    for i in range(number_of_lines):
-        row_values = lines[i].split()
-        number_of_values = row_values.__len__()
-        if (number_of_values > 0):
-            for j in range(number_of_values):
-                map_of_rewards[index][j] = float(row_values[j])
-            index = index + 1
-
-    return map_of_rewards
-
 # drawing map of rewards and strategy using arrows
-def draw_strategy(reward_map, strategy, title):
+def draw(reward_map, strategy, title):
     num_of_rows, num_of_columns = reward_map.shape
     image_map = np.zeros([num_of_rows, num_of_columns, 3], dtype=int)
     for i in range(num_of_rows):
@@ -199,4 +197,52 @@ def draw_strategy(reward_map, strategy, title):
     f.savefig(title + '.svg')
 
 
-   
+def get_transitions(state, action, reward_map):
+    """
+    Returns possible next states, their probabilities, and the rewards based on the current state and action.
+    """
+    num_of_rows, num_of_columns = reward_map.shape
+    prob_side = 0.17
+    prob_back = 0.04
+    prob_forward = 1.0 - 2*prob_side - prob_back
+    wall_colid_reward = -0.4
+
+    transitions = []
+    state_new = np.copy(state)
+
+    # Define actions
+    actions = {
+        1: (0, 1),  # Right
+        2: (-1, 0),  # Up
+        3: (0, -1),  # Left
+        4: (1, 0)   # Down
+    }
+
+    def move(state, action):
+        row, col = state
+        row_change, col_change = actions[action]
+        new_row = np.clip(row + row_change, 0, num_of_rows - 1)
+        new_col = np.clip(col + col_change, 0, num_of_columns - 1)
+        if (new_row, new_col) == (row, col):
+            return (new_row, new_col), wall_colid_reward  # Hit a wall
+        return (new_row, new_col), reward_map[new_row, new_col]  # Normal move
+
+    # Main action (probability prob_forward)
+    state_forward, reward_forward = move(state, action)
+    transitions.append(((state_forward, prob_forward), reward_forward))
+
+    # Side actions (probability prob_side)
+    side_action_1 = (action % 4) + 1  # Clockwise
+    state_side_1, reward_side_1 = move(state, side_action_1)
+    transitions.append(((state_side_1, prob_side), reward_side_1))
+
+    side_action_2 = (action - 2) % 4 + 1  # Counterclockwise
+    state_side_2, reward_side_2 = move(state, side_action_2)
+    transitions.append(((state_side_2, prob_side), reward_side_2))
+
+    # Back action (probability prob_back)
+    back_action = (action + 1) % 4 + 1  # Opposite action
+    state_back, reward_back = move(state, back_action)
+    transitions.append(((state_back, prob_back), reward_back))
+
+    return transitions

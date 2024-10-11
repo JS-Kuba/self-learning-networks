@@ -1,5 +1,3 @@
-# Skrypt do trenowania strategii żeglarza w postaci tablicy Q 
-
 import time
 import os
 import pdb
@@ -8,13 +6,14 @@ import matplotlib.pyplot as plt
 import sailor_funct as sf
 from tqdm import tqdm
 
-number_of_episodes = 800                   # number of training epizodes (multi-stage processes) 
-gamma = 1                                 # discount factor
+number_of_episodes = 1000                   # number of training epizodes (multi-stage processes) 
+gamma = 1.0                                 # discount factor
+delta_max = 0.01                            # threshold for convergence
 
 
-file_name = 'map_simple.txt'
-# file_name = 'map_easy.txt'
-# file_name = 'map_big.txt'
+file_name = 'map_small.txt'
+#file_name = 'map_easy.txt'
+#file_name = 'map_big.txt'
 #file_name = 'map_spiral.txt'
 
 reward_map = sf.load_data(file_name)
@@ -26,89 +25,48 @@ sum_of_rewards = np.zeros([number_of_episodes], dtype=float)
 
 strategy = np.random.randint(low=1,high=5,size=np.shape(reward_map))  # random strategy
 random_strategy_mean_reward = np.mean(sf.sailor_test(reward_map,strategy,1000))
-sf.draw_strategy(reward_map,strategy,"random_strategy_average_reward_=_" + str(np.round(random_strategy_mean_reward,2)))
+sf.draw(reward_map,strategy,"random_strategy mean reward = " + str(random_strategy_mean_reward))
 
+def value_iteration(reward_map, gamma=1.0, delta_max=0.01):
+    V = np.zeros((num_of_rows, num_of_columns))  # Initialize value function V(s)
+    delta = float('inf')  # Set delta to infinity to start the iteration
+    
+    while delta > delta_max:
+        V_pom = np.copy(V)  # Copy V to V_pom
+        delta = 0  # Reset delta
+        
+        # Iterate over all states in the state space
+        for i in range(num_of_rows):
+            for j in range(num_of_columns):
+                state = (i, j)
+                # Update V(s) based on maximum expected future reward
+                V[state] = max(
+                    sum(p * (reward + gamma * V_pom[new_state])
+                        for (new_state, p), reward in sf.get_transitions(state, action, reward_map))
+                    for action in range(1, 5)
+                )
+                # Calculate the max difference in value for convergence check
+                delta = max(delta, abs(V[state] - V_pom[state]))
+                print(delta - delta_max)
+
+    # Extract the optimal policy π(s) based on the learned value function V(s)
+    strategy = np.zeros((num_of_rows, num_of_columns), dtype=int)
+    for i in range(num_of_rows):
+        for j in range(num_of_columns):
+            state = (i, j)
+            strategy[state] = np.argmax([
+                sum(p * (reward + gamma * V[new_state])
+                    for (new_state, p), reward in sf.get_transitions(state, action, reward_map))
+                for action in range(1, 5)
+            ])
+    
+    return strategy
 
 # miejsce na algorytm uczenia - modelem jest tablica Q
 # (symulację epizodu można wziąć z funkcji sailor_test())
-actions = [1, 2, 3, 4]
-state_action_pairs = []
-for x in range(num_of_rows):
-    for y in range(num_of_columns):
-        for a in actions:
-            state_action_pairs.append(((x, y), a))
+# ............................
+optimal_strategy = value_iteration(reward_map, gamma=0.95, delta_max=delta_max)
+print(optimal_strategy)
 
-## Strategy iteration (episodes = 1000, gamma = 0.8)
-# strategies_equal = False
-# while not strategies_equal:
-#     strategy_temp = strategy.copy()
-#     for pair in tqdm(state_action_pairs):
-#         for episode in range(number_of_episodes):
-#             step = 0
-#             state = np.array(pair[0])
-#             action = pair[1]
-#             finish = False
-#             while not finish:
-#                 step += 1
-#                 state_new, reward = sf.environment(state, action, reward_map)
-#                 state = state_new
-#                 action = strategy[state[0], state[1]]
-#                 if (state[1] >= num_of_columns - 1) | (step >= num_of_steps_max):
-#                     finish = True
-#                 sum_of_rewards[episode] += gamma*reward
-            
-#         Q[pair[0][0], pair[0][1], pair[1] - 1] = np.mean(sum_of_rewards)
-
-#         sum_of_rewards = np.zeros([number_of_episodes], dtype=float)
-
-#     for x in range(num_of_rows):
-#         for y in range(num_of_columns):
-#             if y < num_of_columns - 1:
-#                 strategy[x, y] = np.argmax(Q[x, y]) + 1
-#             else:
-#                 strategy[x, y] = 0
-    
-
-#     print("Testing strategy")
-#     iter_rewards = np.mean(sf.sailor_test(reward_map, strategy, 1000))
-#     if np.array_equal(strategy, strategy_temp):
-#         strategies_equal = True
-#     if iter_rewards >= 7:
-#         strategies_equal = True
-#         sf.draw_strategy(reward_map,strategy,"strategy_best_=_" + str(np.round(iter_rewards,2)))
-###
-
-## Value iteration (episodes = 800, gamma = 1)
-alpha = lambda n: 1/(n+1)
-for episode in tqdm(range(number_of_episodes), desc="Episodes"):
-    for pair in state_action_pairs:
-        step = 0
-        state = np.array(pair[0])
-        action = pair[1]
-        rewards = []
-        finish = False
-        while not finish:
-            step += 1
-            state_next, reward = sf.environment(state, action, reward_map)
-            rewards.append(reward)
-            state = state_next
-            action = np.argmax(Q[state[0], state[1]]) + 1
-            if (state[1] >= num_of_columns - 1) | (step >= num_of_steps_max):
-                finish = True
-
-        rewards_sum = sum([gamma**i * r for i, r in enumerate(rewards)])
-        Q[pair[0][0], pair[0][1], pair[1] - 1] = \
-            (1-alpha(episode)) * \
-            Q[pair[0][0], pair[0][1], pair[1] - 1] + \
-            alpha(episode)*rewards_sum
-            
-for x in range(num_of_rows):
-    for y in range(num_of_columns):
-        if y < num_of_columns - 1:
-            strategy[x, y] = np.argmax(Q[x, y]) + 1
-        else:
-            strategy[x, y] = 0
-
-sf.sailor_test(reward_map, strategy, 1000)
-sf.draw_strategy(reward_map,strategy,"strategy_best_iter")
-###
+sf.sailor_test(reward_map, optimal_strategy, 1000)
+sf.draw(reward_map, optimal_strategy, "best_strategy")
