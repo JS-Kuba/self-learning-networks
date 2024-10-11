@@ -12,9 +12,9 @@ number_of_episodes = 800                   # number of training epizodes (multi-
 gamma = 1                                 # discount factor
 
 
-# file_name = 'map_simple.txt'
+file_name = 'map_simple.txt'
 # file_name = 'map_easy.txt'
-file_name = 'map_big.txt'
+# file_name = 'map_big.txt'
 #file_name = 'map_spiral.txt'
 
 reward_map = sf.load_data(file_name)
@@ -110,5 +110,5 @@ for x in range(num_of_rows):
             strategy[x, y] = 0
 
 sf.sailor_test(reward_map, strategy, 1000)
-sf.draw_strategy(reward_map,strategy,"strategy_best_iter_big")
+sf.draw_strategy(reward_map,strategy,"strategy_best_iter")
 ###
