@@ -4,15 +4,14 @@ import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 import sailor_funct as sf
-from tqdm import tqdm
 
 number_of_episodes = 1000                   # number of training epizodes (multi-stage processes) 
-gamma = 1.0                                 # discount factor
-delta_max = 0.01                            # threshold for convergence
+gamma = 0.7                                 # discount factor
+delta_max = 0.0001                            # threshold for convergence
 
 
-# file_name = 'map_small.txt'
-file_name = 'map_easy.txt'
+file_name = 'map_small.txt'
+# file_name = 'map_easy.txt'
 # file_name = 'map_big.txt'
 # file_name = 'map_spiral.txt'
 
@@ -27,11 +26,11 @@ strategy = np.random.randint(low=1,high=5,size=np.shape(reward_map))  # random s
 random_strategy_mean_reward = np.mean(sf.sailor_test(reward_map,strategy,1000))
 sf.draw(reward_map,strategy,"random_strategy mean reward = " + str(random_strategy_mean_reward))
 
-def value_iteration(reward_map, gamma=1.0, delta_max=0.01):
+def value_iteration(reward_map, gamma, delta_max):
     V = np.zeros((num_of_rows, num_of_columns))  # Initialize value function V(s)
     delta = float('inf')  # Set delta to infinity to start the iteration
     
-    while delta > delta_max:
+    while delta >= delta_max:
         V_pom = np.copy(V)  # Copy V to V_pom
         delta = 0  # Reset delta
         
@@ -65,7 +64,7 @@ def value_iteration(reward_map, gamma=1.0, delta_max=0.01):
 # miejsce na algorytm uczenia - modelem jest tablica Q
 # (symulację epizodu można wziąć z funkcji sailor_test())
 # ............................
-optimal_strategy = value_iteration(reward_map, gamma=0.95, delta_max=delta_max)
+optimal_strategy = value_iteration(reward_map, gamma=gamma, delta_max=delta_max)
 
 sf.sailor_test(reward_map, optimal_strategy, 1000)
 sf.draw(reward_map, optimal_strategy, "best_strategy")
