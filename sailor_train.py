@@ -11,10 +11,10 @@ gamma = 1.0                                 # discount factor
 delta_max = 0.01                            # threshold for convergence
 
 
-file_name = 'map_small.txt'
-#file_name = 'map_easy.txt'
-#file_name = 'map_big.txt'
-#file_name = 'map_spiral.txt'
+# file_name = 'map_small.txt'
+file_name = 'map_easy.txt'
+# file_name = 'map_big.txt'
+# file_name = 'map_spiral.txt'
 
 reward_map = sf.load_data(file_name)
 num_of_rows, num_of_columns = reward_map.shape
@@ -58,15 +58,14 @@ def value_iteration(reward_map, gamma=1.0, delta_max=0.01):
                 sum(p * (reward + gamma * V[new_state])
                     for (new_state, p), reward in sf.get_transitions(state, action, reward_map))
                 for action in range(1, 5)
-            ])
-    
+            ]) + 1
+
     return strategy
 
 # miejsce na algorytm uczenia - modelem jest tablica Q
 # (symulację epizodu można wziąć z funkcji sailor_test())
 # ............................
 optimal_strategy = value_iteration(reward_map, gamma=0.95, delta_max=delta_max)
-print(optimal_strategy)
 
 sf.sailor_test(reward_map, optimal_strategy, 1000)
 sf.draw(reward_map, optimal_strategy, "best_strategy")
