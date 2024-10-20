@@ -210,9 +210,7 @@ def get_transitions(state, action, reward_map):
     wall_colid_reward = -0.04
 
     transitions = []
-    state_new = np.copy(state)
 
-    # Define actions
     actions = {
         1: (0, 1),  # Right
         2: (-1, 0),  # Up

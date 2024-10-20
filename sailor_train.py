@@ -8,13 +8,13 @@ import matplotlib.pyplot as plt
 import sailor_funct as sf
 
 number_of_episodes = 1000                   # number of training epizodes (multi-stage processes) 
-gamma = 0.7                                 # discount factor
+gamma = 0.9                                # discount factor
 delta_max = 0.0001                            # threshold for convergence
 
-# file_name = 'map_simple.txt'
+file_name = 'map_simple.txt'
 #file_name = 'map_easy.txt'
-file_name = 'map_big.txt'
-#file_name = 'map_spiral.txt'
+# file_name = 'map_big.txt'
+# file_name = 'map_spiral.txt'
 
 reward_map = sf.load_data(file_name)
 num_of_rows, num_of_columns = reward_map.shape
@@ -51,7 +51,6 @@ def value_iteration(reward_map, gamma, delta_max):
                 delta = max(delta, abs(V[state] - V_pom[state]))
                 print(delta - delta_max)
 
-    # Extract the optimal policy π(s) based on the learned value function V(s)
     strategy = np.zeros((num_of_rows, num_of_columns), dtype=int)
     for i in range(num_of_rows):
         for j in range(num_of_columns):
@@ -64,9 +63,6 @@ def value_iteration(reward_map, gamma, delta_max):
 
     return strategy
 
-# miejsce na algorytm uczenia - modelem jest tablica Q
-# (symulację epizodu można wziąć z funkcji sailor_test())
-# ............................
 optimal_strategy = value_iteration(reward_map, gamma=gamma, delta_max=delta_max)
 
 sf.sailor_test(reward_map, optimal_strategy, 1000)
