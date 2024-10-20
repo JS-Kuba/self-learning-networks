@@ -6,13 +6,13 @@ import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 import sailor_funct as sf
+from tqdm import tqdm
 
-number_of_episodes = 1000                   # number of training epizodes (multi-stage processes) 
-gamma = 0.9                                # discount factor
-delta_max = 0.0001                            # threshold for convergence
+number_of_episodes = 10000                   # number of training epizodes (multi-stage processes) 
+gamma = 1                                    # discount factor
 
 file_name = 'map_simple.txt'
-#file_name = 'map_easy.txt'
+# file_name = 'map_easy.txt'
 # file_name = 'map_big.txt'
 # file_name = 'map_spiral.txt'
 
@@ -27,43 +27,33 @@ strategy = np.random.randint(low=1,high=5,size=np.shape(reward_map))  # random s
 random_strategy_mean_reward = np.mean(sf.sailor_test(reward_map,strategy,1000))
 sf.draw_strategy(reward_map,strategy,"random_strategy_average_reward_=_" + str(np.round(random_strategy_mean_reward,2)))
 
+for episode in tqdm(range(number_of_episodes)):
+    alpha = sf.get_alpha_linear_decay(episode, number_of_episodes, num_of_rows * num_of_columns)
+    # if episode % 100 == 0:
+    #     print(alpha)
+    epsilon = sf.get_epsilon_linear_decay(episode, number_of_episodes, num_of_rows * num_of_columns)
+    if episode % 100 == 0:
+        print(epsilon)
+    state = np.zeros([2], dtype=int)
+    state[0] = np.random.randint(0, num_of_rows)
+    finish = sf.on_finish_line(state[1], num_of_columns)
+    step = 0
+    while not finish:
+        step += 1
+        action = sf.choose_action_epsilon_greedy(state, Q, epsilon)
+        state_next, reward = sf.environment(state, action, reward_map)
+        best_next_action = np.argmax(Q[state_next[0], state_next[1], :]) + 1
+        current_state_and_action = (state[0], state[1], action - 1)
+        next_state_and_best_action = (state_next[0], state_next[1], best_next_action - 1)
+        Q[current_state_and_action] += alpha * (
+            reward + gamma * Q[next_state_and_best_action] - Q[current_state_and_action]
+        )
+        state = state_next
+        if (step == num_of_steps_max) | sf.on_finish_line(state[1], num_of_columns):
+            finish = True
+
+strategy = sf.strategy(Q)
 
 
-def value_iteration(reward_map, gamma, delta_max):
-    V = np.zeros((num_of_rows, num_of_columns))  # Initialize value function V(s)
-    delta = float('inf')  # Set delta to infinity to start the iteration
-    
-    while delta >= delta_max:
-        V_pom = np.copy(V)  # Copy V to V_pom
-        delta = 0  # Reset delta
-        
-        # Iterate over all states in the state space
-        for i in range(num_of_rows):
-            for j in range(num_of_columns):
-                state = (i, j)
-                # Update V(s) based on maximum expected future reward
-                V[state] = max(
-                    sum(p * (reward + gamma * V_pom[new_state])
-                        for (new_state, p), reward in sf.get_transitions(state, action, reward_map))
-                    for action in range(1, 5)
-                )
-                # Calculate the max difference in value for convergence check
-                delta = max(delta, abs(V[state] - V_pom[state]))
-                print(delta - delta_max)
-
-    strategy = np.zeros((num_of_rows, num_of_columns), dtype=int)
-    for i in range(num_of_rows):
-        for j in range(num_of_columns):
-            state = (i, j)
-            strategy[state] = np.argmax([
-                sum(p * (reward + gamma * V[new_state])
-                    for (new_state, p), reward in sf.get_transitions(state, action, reward_map))
-                for action in range(1, 5)
-            ]) + 1
-
-    return strategy
-
-optimal_strategy = value_iteration(reward_map, gamma=gamma, delta_max=delta_max)
-
-sf.sailor_test(reward_map, optimal_strategy, 1000)
-sf.draw_strategy(reward_map, optimal_strategy, "best_strategy")
+sf.sailor_test(reward_map, strategy, 1000)
+sf.draw_strategy(reward_map, strategy, "best_strategy")

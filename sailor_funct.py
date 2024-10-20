@@ -198,51 +198,40 @@ def draw_strategy(reward_map, strategy, title):
     plt.show()
     f.savefig(title + '.svg')
 
+def on_finish_line(column, num_of_columns):
+    return True if column >= num_of_columns - 1 else False
 
-def get_transitions(state, action, reward_map):
-    """
-    Returns possible next states, their probabilities, and the rewards based on the current state and action.
-    """
-    num_of_rows, num_of_columns = reward_map.shape
-    prob_side = 0.12
-    prob_back = 0.06
-    prob_forward = 1.0 - 2*prob_side - prob_back
-    wall_colid_reward = -0.04
+def choose_action_epsilon_greedy(state, Q, exploration_prob):
+    if np.random.rand() < exploration_prob:
+        return np.random.randint(1, 5)
+    else:
+        return 1 + np.argmax(Q[state[0], state[1], :])
+    
+def get_alpha(episode, num_of_episodes, map_size):
+    initial_alpha = 1.0
+    min_alpha = 0.01
+    decay_rate = map_size / num_of_episodes
+    alpha = initial_alpha * np.exp(-decay_rate * episode)
+    return max(alpha, min_alpha)
 
-    transitions = []
+def get_alpha_linear_decay(episode, num_of_episodes, map_size):
+    initial_alpha = 1.0
+    min_alpha = 0.01
+    # The larger the map size, the quicker the decay. The smaller the map size, the slower the decay.
+    decay_rate = map_size / num_of_episodes  
+    alpha = initial_alpha / (1 + decay_rate * episode)
+    return max(alpha, min_alpha)
 
-    actions = {
-        1: (0, 1),  # Right
-        2: (-1, 0),  # Up
-        3: (0, -1),  # Left
-        4: (1, 0)   # Down
-    }
+def get_epsilon(episode, num_of_episodes, map_size):
+    initial_epsilon = 1.0
+    min_epsilon = 0.1
+    decay_rate = map_size / num_of_episodes
+    epsilon = initial_epsilon * np.exp(-decay_rate * episode)
+    return max(epsilon, min_epsilon)
 
-    def move(state, action):
-        row, col = state
-        row_change, col_change = actions[action]
-        new_row = np.clip(row + row_change, 0, num_of_rows - 1)
-        new_col = np.clip(col + col_change, 0, num_of_columns - 1)
-        if (new_row, new_col) == (row, col):
-            return (new_row, new_col), wall_colid_reward  # Hit a wall
-        return (new_row, new_col), reward_map[new_row, new_col]  # Normal move
-
-    # Main action (probability prob_forward)
-    state_forward, reward_forward = move(state, action)
-    transitions.append(((state_forward, prob_forward), reward_forward))
-
-    # Side actions (probability prob_side)
-    side_action_1 = (action % 4) + 1  # Clockwise
-    state_side_1, reward_side_1 = move(state, side_action_1)
-    transitions.append(((state_side_1, prob_side), reward_side_1))
-
-    side_action_2 = (action - 2) % 4 + 1  # Counterclockwise
-    state_side_2, reward_side_2 = move(state, side_action_2)
-    transitions.append(((state_side_2, prob_side), reward_side_2))
-
-    # Back action (probability prob_back)
-    back_action = (action + 1) % 4 + 1  # Opposite action
-    state_back, reward_back = move(state, back_action)
-    transitions.append(((state_back, prob_back), reward_back))
-
-    return transitions
+def get_epsilon_linear_decay(episode, num_of_episodes, map_size):
+    initial_epsilon = 1.0
+    min_epsilon = 0.1
+    decay_rate = map_size / num_of_episodes
+    epsilon = initial_epsilon / (1 + decay_rate * episode)
+    return max(epsilon, min_epsilon)
