@@ -246,3 +246,9 @@ def get_transitions(state, action, reward_map):
     transitions.append(((state_back, prob_back), reward_back))
 
     return transitions
+
+def get_mean_reward(transitions):
+    mean_reward = 0
+    for (_, prob), reward in transitions:
+        mean_reward += prob * reward
+    return mean_reward
