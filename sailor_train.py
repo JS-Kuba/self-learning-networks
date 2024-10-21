@@ -58,7 +58,7 @@ strategy = sf.strategy(Q)
 
 plt.plot(alphas)
 plt.plot(epsilons)
-plt.legend(["aplha", "epsilon"])
+plt.legend(["alpha", "epsilon"])
 plt.show()
 
 sf.sailor_test(reward_map, strategy, 1000)

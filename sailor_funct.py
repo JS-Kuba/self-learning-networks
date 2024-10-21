@@ -209,13 +209,12 @@ def choose_action_epsilon_greedy(state, Q, exploration_prob):
     
 def alpha_linear_decay(episode, num_of_episodes, map_area):
     min_alpha = 0.01
-    # The larger the map size, the quicker the decay. 
-    decay_rate = 0.25*map_area / num_of_episodes
+    decay_rate = 0.25 * map_area / num_of_episodes
     alpha = 1.0 / (1 + decay_rate * episode)
     return max(alpha, min_alpha)
 
 def epsilon_linear_decay(episode, num_of_episodes, map_area):
     min_epsilon = 0.05
-    decay_rate = 0.1*map_area / num_of_episodes
+    decay_rate = 0.1 * map_area / num_of_episodes
     epsilon = 0.8 / (1 + decay_rate * episode)
     return max(epsilon, min_epsilon)
