@@ -64,7 +64,6 @@ def value_iteration(reward_map, gamma, delta_max):
 # optimal_strategy = value_iteration(reward_map, gamma=gamma, delta_max=delta_max)
 
 # Dynamic Programming - strategy iteration
-iteration = 0
 while True:
     delta = delta_max
     V = np.zeros([num_of_rows, num_of_columns], dtype=float)
@@ -101,9 +100,8 @@ while True:
             else:
                 strategy[i, j] = 0
 
-    iteration += 1
-    print(f"Iteration {iteration}")
     if np.array_equal(strategy, strategy_temp):
+        print("finish")
         break
 
 sf.sailor_test(reward_map, strategy, 1000)
