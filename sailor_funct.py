@@ -207,31 +207,15 @@ def choose_action_epsilon_greedy(state, Q, exploration_prob):
     else:
         return 1 + np.argmax(Q[state[0], state[1], :])
     
-def get_alpha(episode, num_of_episodes, map_size):
-    initial_alpha = 1.0
+def alpha_linear_decay(episode, num_of_episodes, map_area):
     min_alpha = 0.01
-    decay_rate = map_size / num_of_episodes
-    alpha = initial_alpha * np.exp(-decay_rate * episode)
+    # The larger the map size, the quicker the decay. 
+    decay_rate = 0.25*map_area / num_of_episodes
+    alpha = 1.0 / (1 + decay_rate * episode)
     return max(alpha, min_alpha)
 
-def get_alpha_linear_decay(episode, num_of_episodes, map_size):
-    initial_alpha = 1.0
-    min_alpha = 0.01
-    # The larger the map size, the quicker the decay. The smaller the map size, the slower the decay.
-    decay_rate = map_size / num_of_episodes  
-    alpha = initial_alpha / (1 + decay_rate * episode)
-    return max(alpha, min_alpha)
-
-def get_epsilon(episode, num_of_episodes, map_size):
-    initial_epsilon = 1.0
-    min_epsilon = 0.1
-    decay_rate = map_size / num_of_episodes
-    epsilon = initial_epsilon * np.exp(-decay_rate * episode)
-    return max(epsilon, min_epsilon)
-
-def get_epsilon_linear_decay(episode, num_of_episodes, map_size):
-    initial_epsilon = 1.0
-    min_epsilon = 0.1
-    decay_rate = map_size / num_of_episodes
-    epsilon = initial_epsilon / (1 + decay_rate * episode)
+def epsilon_linear_decay(episode, num_of_episodes, map_area):
+    min_epsilon = 0.05
+    decay_rate = 0.1*map_area / num_of_episodes
+    epsilon = 0.8 / (1 + decay_rate * episode)
     return max(epsilon, min_epsilon)
