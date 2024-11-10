@@ -208,6 +208,12 @@ def final_score(phis_params, state, if_collision, num_of_steps):
                              phis_params.street_length)/(phis_params.Vmod*phis_params.dt)
     excess_step_num = max(num_of_steps - rational_num_of_steps, 0)
 
+    # print(f"""Ujemne punkty:
+    #     Dist: {1+distance}
+    #     Angl: {(1+angle_reduced*2)}
+    #     Coll: {(1+int(if_collision))}
+    #     Step: {(1 + excess_step_num/rational_num_of_steps)}
+    #     """)
     score = 10/(1+distance)/(1+angle_reduced*2)/(1+int(if_collision))/(1 + excess_step_num/rational_num_of_steps)
 
     return score
