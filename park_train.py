@@ -1,6 +1,5 @@
 import numpy as np
 import parking_model as pm
-from tqdm import tqdm
 
 # przykładowa nagroda za krok - nie wiem czy dobra
 def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
@@ -40,36 +39,15 @@ def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
 
     return wartosc
 
-
-tile_size = 0.2
-offsets = [0.1, 0.3, 0.5]  # Different tilings
-
-def tile_hash(indices, iht_size):
-    return sum([index * (i + 1) for i, index in enumerate(indices)]) % iht_size
-
-def get_tiles(state, iht_size=4096):
-    tile_vector = np.zeros(iht_size)
-    for offset in offsets:
-        tile_index = np.floor((state + offset) / tile_size).astype(int)
-        index = tile_hash(tile_index, iht_size)
-        tile_vector[index] = 1
-    return tile_vector
-
-def choose_action(param_fiz, stan, w):
+def choose_action(param_fiz, stan, model):
     # tutaj należy wykorzystać wyuczoną strategię w czystej eksploatacji
     # strategia może być np. reprezentowana aproksymatorem funkcji użyteczności
     # ..........................................
     # ..........................................
-    best_value = -float("inf")
-    best_action = None
-    for kat in np.linspace(-np.pi / 4, np.pi / 4, 5):
-        for V in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
-            features = get_tiles(np.append(stan, [kat, V]))
-            q_value = np.dot(w, features)
-            if q_value > best_value:
-                best_value = q_value
-                best_action = (kat, V, V == 0)
-    kat, V, czy_zatrzymanie = best_action
+
+    kat = -np.pi/8           # jakiś kąt skrętu kół (na razie)
+    V = -param_fiz.Vmod      # jakaś prędkość (na razie)
+    czy_zatrzymanie = False  # na razie (można przyjąć True np. gdy |V| < próg)
     return kat, V, czy_zatrzymanie
 
 # test parkowania - nie wolno niczego zmieniać!
@@ -137,11 +115,10 @@ def park_train():
     # ........................................................
 
     # inicjacja wektora wag:
-    iht_size = 4096     # na razie, by sie uruchomilo
-    w = np.zeros(iht_size)
+    liczba_wag = 1000     # na razie, by sie uruchomilo
+    w = np.zeros(liczba_wag)
 
-    for epizod in tqdm(range(liczba_epizodow)):
-
+    for epizod in range(liczba_epizodow):
         # Wybieramy stan poczatkowy:
         nr_stanup = epizod %  liczba_stanow_poczatkowych
         stan = stany_poczatkowe[nr_stanup, :]
@@ -156,14 +133,8 @@ def park_train():
             # eksploracji (np. metoda epsylon-zachlanna lub softmax lub jeszcze inna)
             # ........................................................
             # ........................................................
-            # kat = np.pi/8               # na razie
-            # V = param_fiz.Vmod;         # na razie
-            if np.random.rand() < epsylon:
-                kat = np.random.uniform(-np.pi / 4, np.pi / 4)  # Random angle
-                V = np.random.uniform(0, param_fiz.Vmod)  # Random speed
-                czy_zatrzymanie = False 
-            else:
-                kat, V, czy_zatrzymanie = choose_action(param_fiz, stan, w)
+            kat = np.pi/8               # na razie
+            V = param_fiz.Vmod;         # na razie
 
             # wyznaczenie nowego stanu:
             nowystan, sr_obrotu, czy_kolizja = pm.model_of_car(param_fiz, stan, kat, V)
@@ -177,24 +148,7 @@ def park_train():
             # ........................................................
             # ........................................................
             # w = w + ...
-            features = get_tiles(np.append(stan, [kat, V]), iht_size)
 
-            # If next state is terminal, target is just the reward
-            if czy_zatrzymanie:
-                target = R
-            else:
-                # Get max Q-value for the next state
-                max_q_next = -float("inf")
-                for kat_next in np.linspace(-np.pi / 4, np.pi / 4, 5):
-                    for V_next in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
-                        next_features = get_tiles(np.append(nowystan, [kat_next, V_next]), iht_size)
-                        q_value_next = np.dot(w, next_features)
-                        max_q_next = max(max_q_next, q_value_next)
-                target = R + max_q_next
-
-            # Update weights using linear function approximation
-            td_error = target - np.dot(w, features)
-            w += alfa * td_error * features
             stan = nowystan
 
         # co jakis czas test z wygenerowaniem historii do pliku:

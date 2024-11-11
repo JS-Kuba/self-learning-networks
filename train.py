@@ -2,6 +2,33 @@ import numpy as np
 import parking_model as pm
 from tqdm import tqdm
 
+num_prototypes = 100
+
+def create_prototypes(param_fiz):
+    prototypes = []
+    for _ in range(num_prototypes):
+        x = np.random.uniform(0, 10)
+        y = np.random.uniform(0, 10)
+        alpha = np.random.uniform(-np.pi, np.pi)
+        angle = np.random.uniform(-np.pi / 4, np.pi / 4)
+        speed = np.random.choice([param_fiz.Vmod, -param_fiz.Vmod, 0]) 
+        prototypes.append(np.array([x, y, alpha, angle, speed]))
+    return np.array(prototypes)
+
+def compute_similarity(state_action, prototype, sigma=1.0):
+    distance = np.linalg.norm(state_action - prototype)
+    similarity = np.exp(-distance ** 2 / (2 * sigma ** 2))
+    print(similarity)
+    return similarity
+
+# Create the feature vector based on prototype similarities
+def get_prototype_features(state_action):
+    features = np.zeros(num_prototypes)
+    prototypes = create_prototypes(pm.GlobalVar())
+    for i, prototype in enumerate(prototypes):
+        features[i] = compute_similarity(state_action, prototype)
+    return features
+
 # przykładowa nagroda za krok - nie wiem czy dobra
 def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
     # tutaj należy ustalić nagrodę za każdy krok, tak by uczenie podążało
@@ -28,7 +55,7 @@ def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
 
     ocena_odl = 1/(odl_xy_kw+0.5)-1
     # modyfikacja nagrody:
-    ocena_alfa = alfa_zred - 0.8
+    ocena_alfa = alfa_zred - 0.5
 
     # jeśli V==0 nagroda na podstawie odległości
     
@@ -36,37 +63,19 @@ def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
         wartosc = -1
     elif czy_zatrzymanie:
         # modyfikacja nagrody:
-        wartosc = np.mean([ocena_odl,ocena_alfa])
+        wartosc = min(ocena_odl,ocena_alfa)
     else:
         wartosc = 0
     
     return wartosc, odl_xy_kw
 
-
-tile_size = 0.2
-offsets = [0.1, 0.3, 0.5]  # Different tilings
-
-def tile_hash(indices, iht_size):
-    return sum([index * (i + 1) for i, index in enumerate(indices)]) % iht_size
-
-def get_tiles(state, iht_size=4096):
-    tile_vector = np.zeros(iht_size)
-    for offset in offsets:
-        tile_index = np.floor((state + offset) / tile_size).astype(int)
-        index = tile_hash(tile_index, iht_size)
-        tile_vector[index] = 1
-    return tile_vector
-
 def choose_action(param_fiz, stan, w):
-    # tutaj należy wykorzystać wyuczoną strategię w czystej eksploatacji
-    # strategia może być np. reprezentowana aproksymatorem funkcji użyteczności
-    # ..........................................
-    # ..........................................
     best_value = -float("inf")
     best_action = None
     for kat in np.linspace(-np.pi / 4, np.pi / 4, 7):
         for V in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
-            features = get_tiles(np.append(stan, [kat, V]))
+            state_action = np.append(stan, [kat, V])
+            features = get_prototype_features(state_action)
             q_value = np.dot(w, features)
             if q_value > best_value:
                 best_value = q_value
@@ -119,7 +128,7 @@ def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
 def park_train():
     liczba_epizodow = 2000
     alfa = 0.01  # wsp.szybkosci uczenia(moze byc funkcja czasu)
-    epsylon = 1 # wsp.eksploracji(moze byc funkcja czasu)
+    epsylon = 0.1 # wsp.eksploracji(moze byc funkcja czasu)
  
     stany_poczatkowe_1 = np.array([[9.1, 4.6, 0],[6.3, 5.06, 0],[9.6, 3.15, 0],[7.3, 5.75, 0],\
                                  [10.1, 6.21, 0]],dtype=float)    # z prawej przodem w prawo
@@ -139,12 +148,11 @@ def park_train():
     # ........................................................
 
     # inicjacja wektora wag:
-    iht_size = 4096     # na razie, by sie uruchomilo
-    w = np.zeros(iht_size)
-    # min_odl = 100000
+    w = np.zeros(num_prototypes)  # Weights for prototypes
+
 
     for epizod in tqdm(range(liczba_epizodow)):
-        epsylon = max(0.1, epsylon*0.995)
+        # epsylon = max(0.1, epsylon*0.995)
         # Wybieramy stan poczatkowy:
         nr_stanup = epizod %  liczba_stanow_poczatkowych
         stan = stany_poczatkowe[nr_stanup, :]
@@ -152,15 +160,12 @@ def park_train():
         krok = 0
         czy_kolizja = False
         czy_zatrzymanie = False
-        while czy_zatrzymanie == False:
+        while not czy_zatrzymanie:
             krok = krok + 1
 
             # Wyznaczamy akcje a (kąt + kier. ruchu) w stanie stan z uwzględnieniem
             # eksploracji (np. metoda epsylon-zachlanna lub softmax lub jeszcze inna)
-            # ........................................................
-            # ........................................................
-            # kat = np.pi/8               # na razie
-            # V = param_fiz.Vmod;         # na razie
+
             if np.random.rand() < epsylon:
                 kat = np.random.uniform(-np.pi / 4, np.pi / 4)  # Random angle
                 V = np.random.uniform(0, param_fiz.Vmod)  # Random speed
@@ -184,7 +189,8 @@ def park_train():
             # ........................................................
             # ........................................................
             # w = w + ...
-            features = get_tiles(np.append(stan, [kat, V]), iht_size)
+            state_action = np.append(stan, [kat, V])
+            features = get_prototype_features(state_action)
 
             # If next state is terminal, target is just the reward
             if czy_zatrzymanie:
@@ -194,7 +200,8 @@ def park_train():
                 max_q_next = -float("inf")
                 for kat_next in np.linspace(-np.pi / 4, np.pi / 4, 7):
                     for V_next in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
-                        next_features = get_tiles(np.append(nowystan, [kat_next, V_next]), iht_size)
+                        next_state_action = np.append(nowystan, [kat_next, V_next])
+                        next_features = get_prototype_features(next_state_action)
                         q_value_next = np.dot(w, next_features)
                         max_q_next = max(max_q_next, q_value_next)
                 target = R + max_q_next
