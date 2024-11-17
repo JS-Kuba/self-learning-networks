@@ -74,8 +74,20 @@ def choose_action(param_fiz, stan, w):
     kat, V, czy_zatrzymanie = best_action
     return kat, V, czy_zatrzymanie
 
+import os
+def get_best():
+    if os.path.exists("best_run.txt"):
+        with open("best_run.txt", 'r') as best_run_file:
+            try:
+                max_ocena = float(best_run_file.readline())
+            except ValueError:  # Handle invalid or empty file
+                max_ocena = 0
+    else:
+        max_ocena = 0
+    return max_ocena
 # test parkowania - nie wolno niczego zmieniać!
 def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
+    max_ocena = get_best()
     pm.park_save("param.txt", param_fiz)
     phist = open(nazwa_pliku, 'w')
     liczba_stanow_poczatkowych, lparam = stany_poczatkowe.shape
@@ -89,6 +101,8 @@ def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
         krok = 0
         czy_kolizja = False
         czy_zatrzymanie = False
+        run_history = []  # Store the history for this run
+
         while czy_zatrzymanie == False:
             krok = krok + 1
 
@@ -98,6 +112,8 @@ def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
             # zapis kroku historii:
             #phist.write(str(epizod + 1) + "  " + str(krok) + "  " + str(stan[0]) + "  " + str(stan[1]) + "  " + str(stan[2]) + "  " + str(kat) + "  " + str(V) + "\n")
             phist.write("%d %d %.4f %.4f %.4f %.4f %.4f\n" % ((epizod + 1),krok,stan[0],stan[1],stan[2],kat,V))
+            run_history.append((epizod + 1, krok, stan[0], stan[1], stan[2], kat, V))
+
             # wyznaczenie nowego stanu:
             nowystan, sr_obrotu, czy_kolizja = pm.model_of_car(param_fiz, stan, kat, V)
 
@@ -106,6 +122,14 @@ def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
 
             stan = nowystan
         ocena_koncowa = pm.final_score(param_fiz, nowystan, czy_kolizja, krok)
+
+        if ocena_koncowa > max_ocena and krok > 10:
+            max_ocena = ocena_koncowa
+            with open("best_run.txt", 'w') as best_run_file:
+                best_run_file.write(f"{ocena_koncowa}\n")
+                for record in run_history:
+                    best_run_file.write("%d %d %.4f %.4f %.4f %.4f %.4f\n" % record)
+
         sr_ocena_koncowa += ocena_koncowa / liczba_stanow_poczatkowych
         sr_liczba_krokow = sr_liczba_krokow + krok / liczba_stanow_poczatkowych
         print("w %d epizodzie ocena parkowania = %g, liczba krokow = %d" %(epizod, ocena_koncowa, krok))
@@ -120,7 +144,9 @@ def park_train():
     liczba_epizodow = 2000
     alfa = 0.01  # wsp.szybkosci uczenia(moze byc funkcja czasu)
     epsylon = 1 # wsp.eksploracji(moze byc funkcja czasu)
- 
+    lambda_decay = 0.2  # wsp. swiezosci
+    gamma = 0.99  # wsp. dyskontowania
+
     stany_poczatkowe_1 = np.array([[9.1, 4.6, 0],[6.3, 5.06, 0],[9.6, 3.15, 0],[7.3, 5.75, 0],\
                                  [10.1, 6.21, 0]],dtype=float)    # z prawej przodem w prawo
     stany_poczatkowe_2 = np.array([[9.1, 4.6, np.pi],[6.3, 5.06, np.pi],[9.6, 3.15, np.pi],\
@@ -141,9 +167,12 @@ def park_train():
     # inicjacja wektora wag:
     iht_size = 4096     # na razie, by sie uruchomilo
     w = np.zeros(iht_size)
+    z = np.zeros(iht_size)  # wektor śladów aktywności
+
     # min_odl = 100000
 
     for epizod in tqdm(range(liczba_epizodow)):
+        # if epizod % 100 == 0:
         epsylon = max(0.1, epsylon*0.995)
         # Wybieramy stan poczatkowy:
         nr_stanup = epizod %  liczba_stanow_poczatkowych
@@ -152,6 +181,9 @@ def park_train():
         krok = 0
         czy_kolizja = False
         czy_zatrzymanie = False
+        
+        z[:] = 0  # Zerowanie śladów na początku epizodu
+        
         while czy_zatrzymanie == False:
             krok = krok + 1
 
@@ -163,7 +195,7 @@ def park_train():
             # V = param_fiz.Vmod;         # na razie
             if np.random.rand() < epsylon:
                 kat = np.random.uniform(-np.pi / 4, np.pi / 4)  # Random angle
-                V = np.random.uniform(0, param_fiz.Vmod)  # Random speed
+                V = np.random.choice([param_fiz.Vmod, -param_fiz.Vmod]) 
                 czy_zatrzymanie = False 
             else:
                 kat, V, czy_zatrzymanie = choose_action(param_fiz, stan, w)
@@ -197,11 +229,15 @@ def park_train():
                         next_features = get_tiles(np.append(nowystan, [kat_next, V_next]), iht_size)
                         q_value_next = np.dot(w, next_features)
                         max_q_next = max(max_q_next, q_value_next)
-                target = R + max_q_next
+                target = R + gamma * max_q_next
 
             # Update weights using linear function approximation
             td_error = target - np.dot(w, features)
-            w += alfa * td_error * features
+            
+            # 
+            z = gamma * lambda_decay * z + features
+            w += alfa * td_error * z
+
             stan = nowystan
 
 

@@ -12,7 +12,7 @@ def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
     # przykładowe obliczenie nagrody za krok - nie wiem czy dobre:
     wartosc = 0
     x = stan[0]
-    y = stan[1]
+    y = stan[1] 
     alfa = stan[2]
     odl_xy_kw = x*x + y*y
     alfa_zred = 0
@@ -27,18 +27,20 @@ def nagroda_za_krok(param_fiz, stan, czy_kolizja, czy_zatrzymanie):
     alfa_zred = alfa_zred/(odl_xy_kw+0.5)
 
     ocena_odl = 1/(odl_xy_kw+0.5)-1
-    ocena_alfa = alfa_zred - 0.5
+    # modyfikacja nagrody:
+    ocena_alfa = alfa_zred - 0.8
 
     # jeśli V==0 nagroda na podstawie odległości
     
     if czy_kolizja:
         wartosc = -1
     elif czy_zatrzymanie:
-        wartosc = min(ocena_odl,ocena_alfa)
+        # modyfikacja nagrody:
+        wartosc = np.mean([ocena_odl,ocena_alfa])
     else:
         wartosc = 0
-
-    return wartosc
+    
+    return wartosc, odl_xy_kw
 
 
 tile_size = 0.2
@@ -62,7 +64,7 @@ def choose_action(param_fiz, stan, w):
     # ..........................................
     best_value = -float("inf")
     best_action = None
-    for kat in np.linspace(-np.pi / 4, np.pi / 4, 5):
+    for kat in np.linspace(-np.pi / 4, np.pi / 4, 7):
         for V in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
             features = get_tiles(np.append(stan, [kat, V]))
             q_value = np.dot(w, features)
@@ -116,17 +118,12 @@ def park_test(param_fiz, stany_poczatkowe, model, nazwa_pliku):
 
 def park_train():
     liczba_epizodow = 2000
-    alfa = 0.001  # wsp.szybkosci uczenia(moze byc funkcja czasu)
-    epsylon = 0.1 # wsp.eksploracji(moze byc funkcja czasu)
+    alfa = 0.01  # wsp.szybkosci uczenia(moze byc funkcja czasu)
+    epsylon = 1 # wsp.eksploracji(moze byc funkcja czasu)
  
     stany_poczatkowe_1 = np.array([[9.1, 4.6, 0],[6.3, 5.06, 0],[9.6, 3.15, 0],[7.3, 5.75, 0],\
                                  [10.1, 6.21, 0]],dtype=float)    # z prawej przodem w prawo
-    stany_poczatkowe_2 = np.array([[9.1, 4.6, np.pi],[6.3, 5.06, np.pi],[9.6, 3.15, np.pi],\
-                                 [7.3, 5.75, np.pi],[10.1, 6.21, np.pi]],dtype=float)       # z prawej przodem w lewo
-    stany_poczatkowe_3 = np.array([[-9.1, 4.6, 0],[-6.3, 5.06, 0],[-9.6, 3.15, 0],[-7.3, 5.75, 0],\
-                                 [-10.1, 6.21, 0]],dtype=float)    # z lewej przodem w prawo
-    stany_poczatkowe_4 = np.array([[-9.1, 4.6, np.pi],[-6.3, 5.06, np.pi],[-9.6, 3.15, np.pi],\
-                                 [-7.3, 5.75, np.pi],[-10.1, 6.21, np.pi]],dtype=float)       # z lewej przodem w lewo
+
     stany_poczatkowe = stany_poczatkowe_1
     liczba_stanow_poczatkowych, lparam = stany_poczatkowe.shape
 
@@ -139,9 +136,11 @@ def park_train():
     # inicjacja wektora wag:
     iht_size = 4096     # na razie, by sie uruchomilo
     w = np.zeros(iht_size)
+    # min_odl = 100000
 
     for epizod in tqdm(range(liczba_epizodow)):
-
+        if epizod % 100 == 0:
+            epsylon = max(0.1, epsylon*0.8)
         # Wybieramy stan poczatkowy:
         nr_stanup = epizod %  liczba_stanow_poczatkowych
         stan = stany_poczatkowe[nr_stanup, :]
@@ -171,8 +170,12 @@ def park_train():
             if (czy_kolizja)|(krok >= param_fiz.max_number_of_steps):
                 czy_zatrzymanie = True
 
-            R = nagroda_za_krok(param_fiz, nowystan, czy_kolizja, czy_zatrzymanie)
+            R, odl = nagroda_za_krok(param_fiz, nowystan, czy_kolizja, czy_zatrzymanie)
+            # min_odl = min(min_odl, np.sqrt(odl))
+            # print(min_odl)
 
+            # if np.sqrt(odl) < 1.1:
+            #     czy_zatrzymanie = True
             # Aktualizujemy wartosci Q dla aktualnego stanu i wybranej akcji:
             # ........................................................
             # ........................................................
@@ -185,7 +188,7 @@ def park_train():
             else:
                 # Get max Q-value for the next state
                 max_q_next = -float("inf")
-                for kat_next in np.linspace(-np.pi / 4, np.pi / 4, 5):
+                for kat_next in np.linspace(-np.pi / 4, np.pi / 4, 7):
                     for V_next in [param_fiz.Vmod, -param_fiz.Vmod, 0]:
                         next_features = get_tiles(np.append(nowystan, [kat_next, V_next]), iht_size)
                         q_value_next = np.dot(w, next_features)
@@ -197,9 +200,10 @@ def park_train():
             w += alfa * td_error * features
             stan = nowystan
 
+
         # co jakis czas test z wygenerowaniem historii do pliku:
-        if epizod % 1000 == 0:
-            print("epizod %d\n" % epizod)
+        if epizod % 100 == 0:
+            print(f"\nepizod {epizod} epsilon: {epsylon}")
             park_test(param_fiz, stany_poczatkowe, w, "historia_park.txt")
 
     # sprawdzenie czy system dobrze uogólnia dla dowolnych stanów początkowych:
@@ -211,7 +215,6 @@ ocena_koncowa_maks = pm.final_score(pm.GlobalVar(), [0,0,-np.pi], if_collision=F
 print("najlepsza możliwa ocena końcowa = " + str(ocena_koncowa_maks))
 
 park_train()
-
 
 
 
