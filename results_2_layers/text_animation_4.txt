@@ -1,0 +1,394 @@
+X-wall, p - invisible punish., P - visible pubish, r - invis. reward, R - visible reward
+
+
+step = 0 action = v reward = [-0.1]
+new state:
+ . . . . . .|.|
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 1 action = v reward = [-0.1]
+new state:
+ . . . . . .|.|
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 2 action = v reward = [-0.1]
+new state:
+ . . . . . .|.|
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 3 action = < reward = [0]
+new state:
+ . . . . .|.|. 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 4 action = < reward = [0]
+new state:
+ . . . .|.|. . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 5 action = < reward = [0]
+new state:
+ . . .|.|. . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 6 action = v reward = [-0.1]
+new state:
+ . . .|.|. . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 7 action = v reward = [-0.1]
+new state:
+ . . .|.|. . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 8 action = v reward = [-0.1]
+new state:
+ . . .|.|. . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 9 action = < reward = [0]
+new state:
+ . .|.|. . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 10 action = v reward = [0]
+new state:
+ . . . . . . . 
+ X X|.|X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 11 action = v reward = [0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X .|.|. . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 12 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X .|.|. . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 13 action = < reward = [0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X|.|. . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 14 action = v reward = [-1.0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 15 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 16 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 17 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 18 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 19 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 20 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 21 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 22 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 23 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 24 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 25 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 26 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 27 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 28 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 29 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 30 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 31 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 32 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 33 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 34 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 35 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 36 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 37 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 38 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 39 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 40 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 41 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 42 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 43 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 44 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 45 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 46 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 47 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
+
+step = 48 action = v reward = [-0.1]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X|P|X R X P X 
+ X X X X X X X 
