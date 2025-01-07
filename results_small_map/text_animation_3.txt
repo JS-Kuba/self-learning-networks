@@ -1,0 +1,42 @@
+X-wall, p - invisible punish., P - visible pubish, r - invis. reward, R - visible reward
+
+
+step = 0 action = > reward = [0]
+new state:
+ . .|.|. . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 1 action = v reward = [0]
+new state:
+ . . . . . . . 
+ X X|.|X . X X 
+ X . . . . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 2 action = v reward = [0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X .|.|. . . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 3 action = > reward = [0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . .|.|. . X 
+ X P X R X P X 
+ X X X X X X X 
+
+step = 4 action = v reward = [1.0]
+new state:
+ . . . . . . . 
+ X X . X . X X 
+ X . . . . . X 
+ X P X|R|X P X 
+ X X X X X X X 

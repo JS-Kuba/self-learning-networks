@@ -1,3 +1,14 @@
+import numpy as np
+import pdb
+import animat_fun as afun
+import sys
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.autograd import Variable
+import matplotlib.pyplot as plt
+
 # static map from lecture:
 type_of_map = -1          
 obs_size = 3          # size of observable area e.g 3x3
@@ -23,26 +34,13 @@ if_cross = True       # observable area is cross-shaped e.g agent see only verti
 # obs_size = 7
 # if_cross = False
 
-import numpy as np
-import pdb
-import animat_fun as afun
-import sys
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.autograd import Variable
-import matplotlib.pyplot as plt
-
 GAMMA = 0.99
 LEARNING_RATE = 1e-3
 
-class PolicyNetwork(nn.Module):
+class ActorNetwork(nn.Module):
     def __init__(self, num_inputs, num_actions, hidden_size, learning_rate=1e-3):
-        super(PolicyNetwork, self).__init__()
-
-        self.num_actions = num_actions
-        # Deeper network with more hidden layers
+        super(ActorNetwork, self).__init__()
+        self.num_actions = num_actions  # Add this line to store the number of actions
         self.network = nn.Sequential(
             nn.Linear(num_inputs, hidden_size),
             nn.ReLU(),
@@ -55,55 +53,66 @@ class PolicyNetwork(nn.Module):
 
     def forward(self, state):
         return self.network(state)
-    
+
     def get_action(self, state):
         state = torch.from_numpy(state).float().unsqueeze(0)
         probs = self.forward(Variable(state))
-        temperature = 1.0
-        adjusted_probs = probs.pow(1/temperature)
-        adjusted_probs = adjusted_probs / adjusted_probs.sum()
-        
-        highest_prob_action = np.random.choice(
-            self.num_actions, 
-            p=np.squeeze(adjusted_probs.detach().numpy())
+        action = np.random.choice(self.num_actions, p=probs.detach().numpy().squeeze())
+        log_prob = torch.log(probs.squeeze(0)[action])
+        return action, log_prob
+
+
+
+class CriticNetwork(nn.Module):
+    def __init__(self, num_inputs, hidden_size, learning_rate=1e-3):
+        super(CriticNetwork, self).__init__()
+        self.network = nn.Sequential(
+            nn.Linear(num_inputs, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, 1)
         )
-        log_prob = torch.log(probs.squeeze(0)[highest_prob_action])
-        return highest_prob_action, log_prob
+        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
-def update_policy(policy_network, rewards, log_probs):
+    def forward(self, state):
+        return self.network(state)
+
+
+def update_actor_critic(actor, critic, rewards, log_probs, states):
     discounted_rewards = []
-    # compute discounted rewards
-    for t in range(len(rewards)):
-        Gt = 0
-        pw = 0
-        for r in rewards[t:]:
-            Gt = Gt + GAMMA**pw * r
-            pw = pw + 1
-        discounted_rewards.append(Gt)
-        
+    Gt = 0
+    for reward in reversed(rewards):
+        Gt = reward + GAMMA * Gt
+        discounted_rewards.insert(0, Gt)
     discounted_rewards = torch.tensor(discounted_rewards)
-    discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-9)
-
-    policy_gradient = []
-    for log_prob, Gt in zip(log_probs, discounted_rewards):
-        policy_gradient.append(-log_prob * Gt)
     
-    policy_network.optimizer.zero_grad()
-    policy_gradient = torch.stack(policy_gradient).sum()
-    policy_gradient.backward()
-    policy_network.optimizer.step()
+    # Normalize rewards
+    discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-9)
+    
+    states = torch.FloatTensor(states)
+    values = critic(states).squeeze()
+    
+    advantages = discounted_rewards - values.detach()
+    
+    # Update actor
+    actor_loss = (-torch.stack(log_probs) * advantages).mean()
+    actor.optimizer.zero_grad()
+    actor_loss.backward()
+    actor.optimizer.step()
+    
+    # Update critic
+    critic_loss = F.mse_loss(values, discounted_rewards)
+    critic.optimizer.zero_grad()
+    critic_loss.backward()
+    critic.optimizer.step()
 
-def my_action(strategy, observation):
-    action, log_prob = strategy.get_action(observation)
-    return action, log_prob
 
-def animat_train(type_of_map, obs_size=3, if_cross=False, num_episodes=200):
+def animat_train_actor_critic(type_of_map, obs_size=3, if_cross=False, num_episodes=200):
     possible_actions = 4
-    strategy = PolicyNetwork(obs_size**2, possible_actions, hidden_size=512, learning_rate=1e-3)
+    hidden_size = 512
+    actor = ActorNetwork(obs_size**2, possible_actions, hidden_size, learning_rate=1e-3)
+    critic = CriticNetwork(obs_size**2, hidden_size, learning_rate=1e-3)
 
-    gamma = 0.97
     map = afun.generate_map(type_of_map)
-    num_of_rows, num_of_columns = np.shape(map)
     numsteps = []
     avg_numsteps = []
     all_rewards = []
@@ -116,20 +125,23 @@ def animat_train(type_of_map, obs_size=3, if_cross=False, num_episodes=200):
         step_number = 0
         log_probs = []
         rewards = []
+        states = []
 
         while not if_end:
             step_number += 1
             
             observation = afun.observable_region(map, obs_size, position, if_cross)
             observation = observation.flatten()
-            action, log_prob = my_action(strategy, observation)
+            action, log_prob = actor.get_action(observation)
             new_position, reward = afun.transition_and_reward(map, position, action)
+            
             log_probs.append(log_prob)
             rewards.append(reward)
+            states.append(observation)
 
             if (reward > 0) or (step_number > max_num_of_steps):
                 if_end = True
-                update_policy(strategy, rewards, log_probs)
+                update_actor_critic(actor, critic, rewards, log_probs, states)
                 numsteps.append(step_number)
                 avg_numsteps.append(np.mean(numsteps[-10:]))
                 all_rewards.append(np.sum(rewards))
@@ -146,7 +158,12 @@ def animat_train(type_of_map, obs_size=3, if_cross=False, num_episodes=200):
 
             position = new_position
 
-    return strategy
+    return actor, critic
+
+def my_action(strategy, observation):
+    action, log_prob = strategy.get_action(observation)
+    return action, log_prob
+
 
 def animat_test(strategy, type_of_map, obs_size=3, if_cross=False, num_episodes=100):
     gamma = 0.97
@@ -197,6 +214,6 @@ def animat_test(strategy, type_of_map, obs_size=3, if_cross=False, num_episodes=
     print(f"mean sum of discounted rewards = {mean_sum_of_discounted_rewards}")
     print(f"episodes with positive reward = {total_episodes_with_positive_reward}/{num_episodes}")
 
-strategy = animat_train(type_of_map, obs_size, if_cross, num_episodes=300)
-animat_test(strategy, type_of_map, obs_size, if_cross, num_episodes=100)
 
+strategy_actor, strategy_critic = animat_train_actor_critic(type_of_map, obs_size, if_cross, num_episodes=300)
+animat_test(strategy_actor, type_of_map, obs_size, if_cross, num_episodes=100)
