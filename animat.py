@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
+import random
 
 # static map from lecture:
 type_of_map = -1          
@@ -164,18 +165,19 @@ def my_action(strategy, observation):
     action, log_prob = strategy.get_action(observation)
     return action, log_prob
 
-
 def animat_test(strategy, type_of_map, obs_size=3, if_cross=False, num_episodes=100):
     gamma = 0.97
     mean_sum_of_discounted_rewards = 0
     total_episodes_with_positive_reward = 0
 
+    positive_outcome_episodes = []  # Store episodes with positive outcome as (reward, map, path)
+
     for epi in range(num_episodes):
         map = afun.generate_map(type_of_map)
         num_of_rows, num_of_columns = np.shape(map)
         position = afun.start_position(map)
-        max_num_of_steps = 4*(num_of_rows + num_of_columns)
-        
+        max_num_of_steps = 4 * (num_of_rows + num_of_columns)
+
         if_end = False
         step_number = 0
         sum_of_discounted_rewards = 0
@@ -184,7 +186,7 @@ def animat_test(strategy, type_of_map, obs_size=3, if_cross=False, num_episodes=
 
         while not if_end:
             step_number += 1
-            
+
             observation = afun.observable_region(map, obs_size, position, if_cross)
             observation = observation.flatten()
             action, log_prob = my_action(strategy, observation)
@@ -197,18 +199,23 @@ def animat_test(strategy, type_of_map, obs_size=3, if_cross=False, num_episodes=
                 if_end = True
                 if reward > 0:
                     total_episodes_with_positive_reward += 1
+                    positive_outcome_episodes.append((sum_of_discounted_rewards, map, path))
 
             position = new_position
-            sum_of_discounted_rewards += reward*cumulated_gamma
+            sum_of_discounted_rewards += reward * cumulated_gamma
             cumulated_gamma *= gamma
 
-        mean_sum_of_discounted_rewards += sum_of_discounted_rewards/num_episodes
+        mean_sum_of_discounted_rewards += sum_of_discounted_rewards / num_episodes
 
         print(f"episode {epi}: steps = {step_number} sum_of_rewards = {sum_of_discounted_rewards}")
 
-        if epi < 5:
-            afun.save_map_and_path(map, path, epi)
-            afun.save_text_animation(map, path, epi)
+    # Randomly select 10 episodes from those with positive outcome
+    selected_episodes = random.sample(positive_outcome_episodes, min(10, len(positive_outcome_episodes)))
+
+    # Save the selected episodes
+    for rank, (reward, map, path) in enumerate(selected_episodes):
+        afun.save_map_and_path(map, path, rank)
+        afun.save_text_animation(map, path, rank)
 
     print(f"after {num_episodes} episodes:")
     print(f"mean sum of discounted rewards = {mean_sum_of_discounted_rewards}")

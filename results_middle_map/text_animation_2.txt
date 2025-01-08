@@ -1,0 +1,82 @@
+X-wall, p - invisible punish., P - visible pubish, r - invis. reward, R - visible reward
+
+
+step = 0 action = > reward = [0]
+new state:
+ . . X X . . .|.|. . . . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 1 action = > reward = [0]
+new state:
+ . . X X . . . .|.|. . . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 2 action = > reward = [0]
+new state:
+ . . X X . . . . .|.|. . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 3 action = > reward = [0]
+new state:
+ . . X X . . . . . .|.|. 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 4 action = > reward = [0]
+new state:
+ . . X X . . . . . . .|.|
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 5 action = > reward = [0]
+new state:
+|.|. X X . . . . . . . . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ . R X p . . . . . . . . 
+
+step = 6 action = ^ reward = [0]
+new state:
+ . . X X . . . . . . . . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+|.|R X p . . . . . . . . 
+
+step = 7 action = > reward = [1.0]
+new state:
+ . . X X . . . . . . . . 
+ . . . . . . . . . . . . 
+ . . . . . . . . X X . . 
+ . . . . . . . . R X p . 
+ . . . . . . . . . X X . 
+ . X X . . . . . . X X . 
+ .|R|X p . . . . . . . . 
