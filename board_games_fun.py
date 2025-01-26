@@ -220,28 +220,35 @@ class Tictac_general:
         empty_cells = np.where(A == 0)
         empty_cells_number = len(empty_cells[0])
         number_of_pieces = self.num_of_rows*self.num_of_columns - empty_cells_number
-                        
-        if (self.if_adjacent)&(number_of_pieces == 0):
-            actions.append([self.num_of_rows//2, self.num_of_columns//2])
-        elif (self.if_adjacent)&(number_of_pieces == 1):
-            actions.append([self.num_of_rows//2-1, self.num_of_columns//2])
-            actions.append([self.num_of_rows//2-1, self.num_of_columns//2-1])
+
+        if self.if_adjacent:
+            if (self.if_adjacent)&(number_of_pieces == 0):
+                actions.append([self.num_of_rows//2, self.num_of_columns//2])
+            elif (self.if_adjacent)&(number_of_pieces == 1):
+                actions.append([self.num_of_rows//2-1, self.num_of_columns//2])
+                actions.append([self.num_of_rows//2-1, self.num_of_columns//2-1])
+            else:
+                for i in range(empty_cells_number):
+                    row = empty_cells[0][i]
+                    column = empty_cells[1][i]
+                    if self.if_adjacent:
+                        num_of_neibours = 0
+                        for r in range(3):
+                            for c in range(3):
+                                rr = row + r - 1
+                                cc = column + c - 1
+                                if (rr >= 0)&(rr < self.num_of_rows)&(cc >= 0)&(cc < self.num_of_columns):
+                                    num_of_neibours += (A[rr,cc] != 0)
+                    if empty_cells_number == self.num_of_rows*self.num_of_columns:
+                        num_of_neibours = 1
+                    if (self.if_adjacent == False)|(num_of_neibours > 0):
+                        actions.append([row, column])
         else:
             for i in range(empty_cells_number):
                 row = empty_cells[0][i]
                 column = empty_cells[1][i]
-                if self.if_adjacent:
-                    num_of_neibours = 0
-                    for r in range(3):
-                        for c in range(3):
-                            rr = row + r - 1
-                            cc = column + c - 1
-                            if (rr >= 0)&(rr < self.num_of_rows)&(cc >= 0)&(cc < self.num_of_columns):
-                                num_of_neibours += (A[rr,cc] != 0)
-                if empty_cells_number == self.num_of_rows*self.num_of_columns:
-                    num_of_neibours = 1
-                if (self.if_adjacent == False)|(num_of_neibours > 0):
-                    actions.append([row, column])
+                actions.append([row, column])
+
 
         return actions
         
@@ -309,7 +316,6 @@ class Connect4(Tictac_general):
                     actions.append([r,c])
                     break
                 r -= 1
-
         return actions
 
 
@@ -859,6 +865,8 @@ class Chess():
                                     moves_potential.append([self.Pawn+shift,r,c,r2up,c,self.Queen+shift])
                                 else:               # only move
                                     moves_potential.append([self.Pawn+shift,r,c,r2up,c])
+
+                    # .................... bicie w przelocie (en passant)  może odsłonić króla            
                     # end of Pawn moves
                 elif Board[r,c] == self.Knight + shift:                  
                     for dr,dc in [[-1,2],[1,2],[-1,-2],[1,-2],[2,-1],[2,1],[-2,-1],[-2,1]]:

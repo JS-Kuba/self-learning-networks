@@ -4,6 +4,7 @@ import time
 import matplotlib.pylab as plt
 import pdb
 import board_games_fun as bfun
+import board_graphical_interface as bgra
 
 # Q-learning xo strategy using dictionary for Q-values in each known state: 
 class Strategy_Qdict:
@@ -525,14 +526,23 @@ def board_game_test(game_object, strategy_x, strategy_o, number_of_games = 100, 
 def experiment_par_train():
     print("\nUCZENIE DWOCH STRATEGII JEDNOCZESNIE\n")
     game = bfun.Tictactoe()                      # game class object
-    #game = bfun.Tictac_general(4,4,3,True)
+    game = bfun.Tictac_general(4,4,3,False)
+    game = bfun.Tictac_general(10,10,4,False)
+    #game = bfun.Tictac_general(5,5,4,False)
     #game = bfun.Connect4()
+    #game = bfun.Chess("szachy_plansza_3x3.txt")
+    #game = bfun.Chess("szachy_plansza_4x4.txt")
     #game = bfun.Chess("szachy_plansza_5x5.txt")
     #game = bfun.Chess("szachy_plansza_5x3_bez_kroli.txt")
+    #game = bfun.Chess("szachy_plansza_5x10.txt")
+    #game = bfun.Chess("szachy_plansza_standardowa.txt")
+    #game = bfun.Chess("szachy_plansza_14x14.txt")
 
-    strategy_x, strategy_o = board_game_train_Q2(game,players_to_train = [1,2], number_of_games = 5000)
+    strategy_x, strategy_o = board_game_train_Q2(game,players_to_train = [1,2], number_of_games = 10)
 
-    print("test stategii uczonych jednocześnie:")
+    bgra.play_with_strategy(game_object = game, strategy = strategy_o, str_player=2)
+
+    print("test stategii uczonych jednocześniewl,:")
     num_win_x, num_win_o, num_draws, Games, Rewards = board_game_test(game,strategy_x,strategy_o,choose_random=[])
     print("liczby wygranych: x = "+str(num_win_x)+", o = "+str(num_win_o) + ", l.remisów = "+str(num_draws))
     game.print_test_to_file("gry_wyuczonych_strategii.txt",num_win_x, num_win_o, num_draws, Games, Rewards)
@@ -591,6 +601,12 @@ def experiment_par_train():
     plt.show()
     fig2 = plt
 
+    # play with x (white in chess) strategy:
+    #bgra.play_with_strategy(game_object = game, strategy = strategy_x, str_player=1)
+
+    # play with o (black in chess) strategy:
+    bgra.play_with_strategy(game_object = game, strategy = strategy_o, str_player=2)
+
     # print("\nDouczanie strategii o na ustalonej strategii x, by sprawdzić")
     # print("na ile uczenie równoczesne było skuteczne.\n")
     # _, strategy_o_doucz = \
@@ -599,8 +615,6 @@ def experiment_par_train():
     # print("test stategii douczanej o i uczonej x:")
     # num_win_x, num_win_o, num_draws, Games, Rewards = board_game_test(game, strategy_x,strategy_o_doucz)
     # game.print_test_to_file("gry_uczonej_X_z_douczana_O.txt",num_win_x, num_win_o, num_draws, Games, Rewards)
-
-
 
 
 experiment_par_train()
