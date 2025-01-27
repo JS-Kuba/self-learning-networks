@@ -6,7 +6,6 @@ import torch.optim as optim
 import board_games_fun as bfun
 import matplotlib.pyplot as plt
 
-# Neural network for strategy approximation
 class StrategyNN(nn.Module):
     def __init__(self, input_size, output_size):
         super(StrategyNN, self).__init__()
@@ -51,14 +50,12 @@ class Strategy_PolicyNeuro:
             valid_probs /= valid_probs.sum()  # Normalize probabilities
         
         if self.if_epsilon_greedy:
-            # Epsilon-greedy: Explore (randomly select) with epsilon probability
             if np.random.rand() < self.epsilon:
                 action_flat = np.random.choice(action_indices)  # Explore
             else:
                 action_flat = action_indices[np.argmax(valid_probs)]  # Exploit
         else:
-            # Pure strategy (greedy)
-            action_flat = action_indices[np.argmax(valid_probs)]  # Always pick the best action
+            action_flat = action_indices[np.argmax(valid_probs)]
 
         action = [action_flat // self.board_size, action_flat % self.board_size]
 
@@ -69,8 +66,8 @@ class Strategy_PolicyNeuro:
         self.if_epsilon_greedy = True
         
     def make_pure(self):
-        self.if_epsilon_greedy = False  # Reset to pure (greedy) strategy
-        self.epsilon = 0  # No randomness
+        self.if_epsilon_greedy = False 
+        self.epsilon = 0  
 
 
     def train_on_sample(self, state, action, reward):
@@ -108,7 +105,6 @@ class Strategy_VNeuro:
         loss.backward()
         self.optimizer.step()
 
-# Training with Actor-Critic algorithm
 def board_game_train_actor_critic(game_object, strategy_policy, strategy_value, number_of_games=2000):
     gamma = 0.9
     t1 = time.time()
@@ -133,7 +129,6 @@ def board_game_train_actor_critic(game_object, strategy_policy, strategy_value, 
             if game_object.end_of_game(reward, len(trajectory), state, action):
                 done = True
 
-        # Update strategies after game ends
         G = 0
         for state, action, reward in reversed(trajectory):
             G = reward + gamma * G
@@ -145,7 +140,6 @@ def board_game_train_actor_critic(game_object, strategy_policy, strategy_value, 
     print(f"Training finished in {dt:.2f} seconds.")
 
 
-# Testing the trained strategies
 def board_game_test(game_object, strategy_x, strategy_o, number_of_games=100, choose_random=[]):
     num_win_x = 0
     num_win_o = 0
@@ -170,10 +164,9 @@ def board_game_test(game_object, strategy_x, strategy_o, number_of_games=100, ch
             actions_list = game_object.actions(state, player)
 
             strategy = strategy_x if player == 1 else strategy_o
-            action, _ = strategy.choose_action(state, player)  # Get action tuple (row, col)
-            # Handle randomness or validate action
+            action, _ = strategy.choose_action(state, player)  
             if (action is None) or (step_number in choose_random):
-                action = actions_list[np.random.randint(len(actions_list))]  # Random action
+                action = actions_list[np.random.randint(len(actions_list))] 
             elif action not in actions_list:
                 raise ValueError(f"Invalid action {action} not in actions list {actions_list}")
 
@@ -198,24 +191,21 @@ def board_game_test(game_object, strategy_x, strategy_o, number_of_games=100, ch
     return num_win_x, num_win_o, num_draws, Games, Rewards
 
 
-# Experiment with testing and plotting
 def experiment_actor_critic_with_testing():
     print("\nActor-Critic Training and Testing\n")
-    game = bfun.Tictactoe()
+    # game = bfun.Tictactoe()
+    game = bfun.Tictac_general(4,4,3,True)
 
     strategy_policy_x = Strategy_PolicyNeuro(game)
     strategy_policy_o = Strategy_PolicyNeuro(game)
     strategy_value = Strategy_VNeuro(game)
 
-    # Training
     board_game_train_actor_critic(game, strategy_policy_x, strategy_value, number_of_games=1000)
 
-    # Testing trained strategies
     print("Testing trained strategies:")
     num_win_x, num_win_o, num_draws, _, _ = board_game_test(game, strategy_policy_x, strategy_policy_o)
     print(f"Results: X wins: {num_win_x}, O wins: {num_win_o}, Draws: {num_draws}")
 
-    # Test partially random strategies
     print("Testing X strategy with partially random O strategy:")
     t = []
     nwin_x = []
@@ -226,7 +216,6 @@ def experiment_actor_critic_with_testing():
         epsilon = i / 10
         t.append(epsilon)
         
-        # Apply epsilon-greedy to O strategy
         strategy_policy_o.make_epsilon_greedy(epsilon=epsilon)
         
         wins_x, wins_o, draws, _, _ = board_game_test(game, strategy_policy_x, strategy_policy_o)
@@ -234,10 +223,8 @@ def experiment_actor_critic_with_testing():
         nwin_o.append(wins_o)
         ndraws.append(draws)
 
-    # Reset strategy to pure (no randomness)
     strategy_policy_o.make_pure()
 
-    # Plotting results
     plt.plot(t, nwin_x, "x", label="X wins")
     plt.plot(t, nwin_o, "o", label="O wins")
     plt.plot(t, ndraws, "-", label="Draws")
